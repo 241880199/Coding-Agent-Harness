@@ -1,4 +1,4 @@
-import type { DatabaseSync } from 'node:sqlite';
+import type { Database } from './database.js';
 
 export interface Session {
   id: string;
@@ -19,7 +19,7 @@ export interface ActionLog {
 }
 
 export class SessionManager {
-  constructor(private db: DatabaseSync) {}
+  constructor(private db: Database) {}
 
   createSession(project: string, goal: string): Session {
     const id = crypto.randomUUID();

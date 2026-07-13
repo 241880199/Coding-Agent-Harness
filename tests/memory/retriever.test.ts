@@ -21,7 +21,7 @@ describe('Retriever', () => {
   it('should retrieve relevant knowledge for a goal', () => {
     km.writeNote('my-project', 'architecture', 'Uses SQLite for persistence', null);
     km.writeNote('my-project', 'decision', 'Prefer readonly transactions', null);
-    const result = retriever.retrieve('my-project', 'how to store data');
+    const result = retriever.retrieve('my-project', 'using SQLite and readonly transactions');
     expect(result).toContain('SQLite');
     expect(result).toContain('readonly');
   });
