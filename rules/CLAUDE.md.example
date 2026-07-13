@@ -1,0 +1,4 @@
+# Project Rules
+- 所有代码必须通过 TDD
+- 使用 TypeScript strict mode
+- API Key 绝不硬编码
