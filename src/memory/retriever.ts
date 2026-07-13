@@ -19,15 +19,6 @@ export class Retriever {
       if (results.length >= 5) break;
     }
 
-    if (results.length === 0) {
-      const recent = this.km.getNotes(project);
-      for (const note of recent) {
-        if (results.length < 5) {
-          results.push(`[${note.category}] ${note.content}`);
-        }
-      }
-    }
-
     return results.join('\n');
   }
 }

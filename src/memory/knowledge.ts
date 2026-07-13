@@ -1,4 +1,4 @@
-import type { DatabaseSync } from 'node:sqlite';
+import type { Database } from './database.js';
 import type { MemoryCategory } from '../harness/types.js';
 
 export interface KnowledgeRow {
@@ -12,7 +12,7 @@ export interface KnowledgeRow {
 }
 
 export class KnowledgeManager {
-  constructor(private db: DatabaseSync) {}
+  constructor(private db: Database) {}
 
   writeNote(project: string, category: MemoryCategory, content: string, sourceSession: string | null): number {
     const existing = this.db.prepare(

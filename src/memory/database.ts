@@ -6,13 +6,15 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { DatabaseSync: DatabaseSyncCtor } = require('node:sqlite') as { DatabaseSync: new (...args: any[]) => DatabaseSync };
 
-export function createMemoryDatabase(): DatabaseSync {
+export type Database = DatabaseSync;
+
+export function createMemoryDatabase(): Database {
   const db = new DatabaseSyncCtor(':memory:');
   applyMigrations(db);
   return db;
 }
 
-export function initDatabase(dataDir: string): DatabaseSync {
+export function initDatabase(dataDir: string): Database {
   if (dataDir === ':memory:') {
     return createMemoryDatabase();
   }
