@@ -48,6 +48,6 @@ export class SessionManager {
   getActionLogs(sessionId: string): ActionLog[] {
     return this.db.prepare(
       "SELECT * FROM action_logs WHERE session_id = ? ORDER BY step ASC"
-    ).all(sessionId) as ActionLog[];
+    ).all(sessionId) as unknown as ActionLog[];
   }
 }
