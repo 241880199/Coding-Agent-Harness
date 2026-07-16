@@ -29,16 +29,16 @@ export class KnowledgeManager {
     if (category) {
       return this.db.prepare(
         "SELECT * FROM project_knowledge WHERE project = ? AND category = ? ORDER BY created_at DESC"
-      ).all(project, category) as KnowledgeRow[];
+      ).all(project, category) as unknown as KnowledgeRow[];
     }
     return this.db.prepare(
       "SELECT * FROM project_knowledge WHERE project = ? ORDER BY created_at DESC"
-    ).all(project) as KnowledgeRow[];
+    ).all(project) as unknown as KnowledgeRow[];
   }
 
   search(project: string, keyword: string): KnowledgeRow[] {
     return this.db.prepare(
       "SELECT * FROM project_knowledge WHERE project = ? AND content LIKE ? ORDER BY created_at DESC LIMIT 5"
-    ).all(project, `%${keyword}%`) as KnowledgeRow[];
+    ).all(project, `%${keyword}%`) as unknown as KnowledgeRow[];
   }
 }
