@@ -49,7 +49,7 @@ export async function agentLoop(goal: string, harness: Harness, depth: number = 
       );
       if (consecutiveErrors >= 3) {
         done = true;
-        answer = `LLM provider failed ${consecutiveErrors} times consecutively. Last error: ${(e as Error).message}`;
+        answer = `LLM provider failed ${consecutiveErrors} times consecutively.\nLast error: ${(e as Error).message}\n\nCheck your config: harness config view-model  |  harness config view-url  |  harness config view-key`;
         break;
       }
       continue;

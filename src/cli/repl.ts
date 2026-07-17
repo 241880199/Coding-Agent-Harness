@@ -32,6 +32,7 @@ export async function replCommand(maxStepsOverride?: number, verbose?: boolean):
   const project = process.cwd().split(/[/\\]/).pop() || 'default';
   const baseUrl = await credMgr.getBaseUrl();
   const model = await credMgr.getModel();
+  const effectiveModel = model || 'gpt-4o-mini';
   const maxSteps = maxStepsOverride || 200;
   let harness = await createHarness(project, apiKey, baseUrl, model, maxSteps, verbose);
 
@@ -41,7 +42,7 @@ export async function replCommand(maxStepsOverride?: number, verbose?: boolean):
     prompt: '\n> ',
   });
 
-  console.log(`[Session] Project: ${project}\n`);
+  console.log(`[Session] Project: ${project}  Model: ${effectiveModel}${baseUrl ? `  URL: ${baseUrl}` : ''}\n`);
   rl.prompt();
 
   rl.on('line', async (input: string) => {
