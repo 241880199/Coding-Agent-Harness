@@ -42,10 +42,20 @@ export async function agentLoop(goal: string, harness: Harness, depth: number = 
       continue;
     }
 
-    const { text, action } = response;
+    const { text, action, toolCalls } = response;
     (harness.tracer as any).record(action, { success: true, data: text });
 
-    messages.push({ role: 'assistant', content: text });
+    messages.push({
+      role: 'assistant',
+      content: text,
+      ...(toolCalls ? {
+        tool_calls: toolCalls.map(tc => ({
+          id: tc.id,
+          type: 'function' as const,
+          function: { name: tc.name, arguments: tc.arguments },
+        })),
+      } : {}),
+    });
 
     if (action.type === 'done') {
       done = true;
@@ -113,7 +123,11 @@ export async function agentLoop(goal: string, harness: Harness, depth: number = 
         result = { success: false, error: `Tool '${tool}' not found` };
       }
 
-      messages.push({ role: 'tool', content: result.success ? (result.data || '') : (result.error || '') });
+      messages.push({
+        role: 'tool',
+        content: result.success ? (result.data || '') : (result.error || ''),
+        tool_call_id: (action as any).toolCallId,
+      });
       trace.push({ step: steps, action, result });
 
       for (const hook of harness.hooks) {

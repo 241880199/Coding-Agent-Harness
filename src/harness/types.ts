@@ -4,6 +4,7 @@ export interface CallToolAction {
   type: 'call_tool';
   tool: string;
   args: Record<string, unknown>;
+  toolCallId?: string;
   changed_code?: boolean;
 }
 
@@ -38,6 +39,7 @@ export interface ActionResult {
 export interface LLMResponse {
   text: string;
   action: Action;
+  toolCalls?: Array<{ id: string; name: string; arguments: string }>;
 }
 
 export type MessageRole = 'system' | 'user' | 'assistant' | 'tool';
@@ -45,6 +47,12 @@ export type MessageRole = 'system' | 'user' | 'assistant' | 'tool';
 export interface Message {
   role: MessageRole;
   content: string;
+  tool_calls?: Array<{
+    id: string;
+    type: 'function';
+    function: { name: string; arguments: string };
+  }>;
+  tool_call_id?: string;
 }
 
 export interface ToolParamDef {

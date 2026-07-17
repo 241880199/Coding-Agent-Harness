@@ -64,7 +64,12 @@ export class OpenAIProvider implements LLMProvider {
       },
       body: JSON.stringify({
         model: this.model,
-        messages: messages.map(m => ({ role: m.role, content: m.content })),
+        messages: messages.map(m => {
+        const msg: Record<string, unknown> = { role: m.role, content: m.content };
+        if (m.tool_calls) msg.tool_calls = m.tool_calls;
+        if (m.tool_call_id) msg.tool_call_id = m.tool_call_id;
+        return msg;
+      }),
         tools: functions,
       }),
     });
@@ -80,6 +85,11 @@ export class OpenAIProvider implements LLMProvider {
 
     if (message.tool_calls && message.tool_calls.length > 0) {
       const tc = message.tool_calls[0].function;
+      const toolCalls = message.tool_calls.map((tc: any) => ({
+        id: tc.id,
+        name: tc.function.name,
+        arguments: tc.function.arguments,
+      }));
 
       let parsedArgs: Record<string, unknown>;
       try {
@@ -88,6 +98,7 @@ export class OpenAIProvider implements LLMProvider {
         return {
           text: content,
           action: { type: 'unknown' },
+          toolCalls,
         };
       }
 
@@ -95,6 +106,7 @@ export class OpenAIProvider implements LLMProvider {
         return {
           text: content,
           action: { type: 'take_note', note: parsedArgs.note as string } as Action,
+          toolCalls,
         };
       }
 
@@ -102,12 +114,14 @@ export class OpenAIProvider implements LLMProvider {
         return {
           text: content,
           action: { type: 'spawn_subagent', subtask: parsedArgs.subtask as string } as Action,
+          toolCalls,
         };
       }
 
       return {
         text: content,
-        action: { type: 'call_tool', tool: tc.name, args: parsedArgs } as Action,
+        action: { type: 'call_tool', tool: tc.name, args: parsedArgs, toolCallId: message.tool_calls[0].id } as Action,
+        toolCalls,
       };
     }
 
