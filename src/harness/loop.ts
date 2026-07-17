@@ -48,6 +48,7 @@ export async function agentLoop(goal: string, harness: Harness, depth: number = 
         { success: false, error: (e as Error).message },
       );
       if (consecutiveErrors >= 3) {
+        done = true;
         answer = `LLM provider failed ${consecutiveErrors} times consecutively. Last error: ${(e as Error).message}`;
         break;
       }
