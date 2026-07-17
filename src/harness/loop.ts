@@ -15,11 +15,16 @@ export async function agentLoop(goal: string, harness: Harness, depth: number = 
   let done = false;
   let answer = '';
   let steps = 0;
+  let consecutiveErrors = 0;
   const recentToolCalls: string[] = [];
   const trace: Array<{ step: number; action: Action; result: ActionResult }> = [];
 
   while (!done && steps < harness.config.maxSteps) {
     steps++;
+
+    if (harness.config.verbose) {
+      process.stderr.write(`\n[Step ${steps}]`);
+    }
 
     if (estimateTokens(messages) > harness.config.tokenLimit) {
       messages = compact(messages, harness.config.tokenLimit);
@@ -33,17 +38,28 @@ export async function agentLoop(goal: string, harness: Harness, depth: number = 
     let response;
     try {
       response = await harness.config.llmProvider.call(messages, allTools);
+      consecutiveErrors = 0;
     } catch (e) {
-      messages.push({ role: 'user', content: `[Error] LLM call failed: ${(e as Error).message}` });
+      consecutiveErrors++;
+      const errMsg = `[Error] LLM call failed: ${(e as Error).message}`;
+      messages.push({ role: 'user', content: errMsg });
       (harness.tracer as any).record(
         { type: 'unknown' },
         { success: false, error: (e as Error).message },
       );
+      if (consecutiveErrors >= 3) {
+        answer = `LLM provider failed ${consecutiveErrors} times consecutively. Last error: ${(e as Error).message}`;
+        break;
+      }
       continue;
     }
 
     const { text, action, toolCalls } = response;
     (harness.tracer as any).record(action, { success: true, data: text });
+
+    if (harness.config.verbose) {
+      process.stderr.write(` ${action.type}${action.type === 'call_tool' ? `:${(action as any).tool}` : ''}${action.type === 'done' ? ` "${text.slice(0, 80)}${text.length > 80 ? '...' : ''}"` : ''}`);
+    }
 
     messages.push({
       role: 'assistant',

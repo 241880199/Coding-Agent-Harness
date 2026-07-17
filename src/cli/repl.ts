@@ -6,7 +6,7 @@ import { OpenAIProvider } from '../llm/openai.js';
 import { Harness } from '../harness/types.js';
 import fs from 'fs';
 
-export async function replCommand(maxStepsOverride?: number): Promise<void> {
+export async function replCommand(maxStepsOverride?: number, verbose?: boolean): Promise<void> {
   const credMgr = new CredentialManager();
   let apiKey = await credMgr.getKey();
 
@@ -31,8 +31,9 @@ export async function replCommand(maxStepsOverride?: number): Promise<void> {
 
   const project = process.cwd().split(/[/\\]/).pop() || 'default';
   const baseUrl = await credMgr.getBaseUrl();
+  const model = await credMgr.getModel();
   const maxSteps = maxStepsOverride || 200;
-  let harness = await createHarness(project, apiKey, baseUrl, maxSteps);
+  let harness = await createHarness(project, apiKey, baseUrl, model, maxSteps, verbose);
 
   const rl = readline.createInterface({
     input: process.stdin,
@@ -58,7 +59,7 @@ export async function replCommand(maxStepsOverride?: number): Promise<void> {
       switch (action) {
         case '/new-session':
           console.log('[Session] Starting new session...\n');
-          harness = await createHarness(project, apiKey, baseUrl, maxSteps);
+          harness = await createHarness(project, apiKey, baseUrl, model, maxSteps, verbose);
           rl.prompt();
           return;
 
@@ -108,8 +109,8 @@ Examples:
   });
 }
 
-async function createHarness(project: string, apiKey: string, baseUrl: string | null, maxSteps: number): Promise<Harness> {
-  const llmProvider = new OpenAIProvider(apiKey, 'gpt-4o-mini', baseUrl || undefined);
+async function createHarness(project: string, apiKey: string, baseUrl: string | null, model: string | null, maxSteps: number, verbose?: boolean): Promise<Harness> {
+  const llmProvider = new OpenAIProvider(apiKey, model || 'gpt-4o-mini', baseUrl || undefined);
   return await buildAgent({
     project,
     llmProvider,
@@ -120,5 +121,6 @@ async function createHarness(project: string, apiKey: string, baseUrl: string | 
       try { fs.accessSync(f); return true; } catch { return false; }
     }),
     dataDir: './.harness',
+    verbose,
   });
 }

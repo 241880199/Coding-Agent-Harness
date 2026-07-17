@@ -12,6 +12,7 @@ interface KeytarLike {
 interface FileStore {
   apiKey?: string;
   baseUrl?: string;
+  model?: string;
 }
 
 export class CredentialManager {
@@ -119,6 +120,49 @@ export class CredentialManager {
       delete store.baseUrl;
       this.saveFileStore();
     }
+  }
+
+  async setModel(model: string): Promise<void> {
+    try {
+      const kt = await this.ensureKeytar();
+      await kt.setPassword(this.serviceName, 'model', model);
+    } catch {
+      const store = this.loadFileStore();
+      store.model = model;
+      this.saveFileStore();
+    }
+  }
+
+  async getModel(): Promise<string | null> {
+    if (process.env['HARNESS_MODEL']) {
+      return process.env['HARNESS_MODEL']!;
+    }
+    try {
+      const kt = await this.ensureKeytar();
+      return await kt.getPassword(this.serviceName, 'model');
+    } catch {
+      const store = this.loadFileStore();
+      return store.model || null;
+    }
+  }
+
+  async clearModel(): Promise<void> {
+    try {
+      const kt = await this.ensureKeytar();
+      await kt.deletePassword(this.serviceName, 'model');
+    } catch {
+      const store = this.loadFileStore();
+      delete store.model;
+      this.saveFileStore();
+    }
+  }
+
+  async viewModel(): Promise<string> {
+    const model = await this.getModel();
+    if (model) {
+      return `Model: ${model}`;
+    }
+    return 'Model: not configured (default: gpt-4o-mini)';
   }
 
   async viewStatus(): Promise<string> {

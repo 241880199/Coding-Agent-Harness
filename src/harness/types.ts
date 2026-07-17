@@ -124,6 +124,7 @@ export interface HarnessConfig {
   tokenLimit: number;
   ruleFiles: string[];
   dataDir: string;
+  verbose?: boolean;
 }
 
 export interface Harness {

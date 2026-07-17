@@ -4,7 +4,7 @@ import { CredentialManager } from '../config/credential.js';
 import { OpenAIProvider } from '../llm/openai.js';
 import fs from 'fs';
 
-export async function startCommand(goal: string, maxSteps?: number): Promise<void> {
+export async function startCommand(goal: string, maxSteps?: number, verbose?: boolean): Promise<void> {
   const credMgr = new CredentialManager();
   const apiKey = await credMgr.getKey();
 
@@ -15,7 +15,8 @@ export async function startCommand(goal: string, maxSteps?: number): Promise<voi
 
   console.log(`[Harness] Starting agent for: ${goal}`);
   const baseUrl = await credMgr.getBaseUrl();
-  const llmProvider = new OpenAIProvider(apiKey, 'gpt-4o-mini', baseUrl || undefined);
+  const model = await credMgr.getModel();
+  const llmProvider = new OpenAIProvider(apiKey, model || 'gpt-4o-mini', baseUrl || undefined);
   const harness = await buildAgent({
     project: process.cwd().split(/[/\\]/).pop() || 'default',
     llmProvider,
@@ -26,6 +27,7 @@ export async function startCommand(goal: string, maxSteps?: number): Promise<voi
       try { fs.accessSync(f); return true; } catch { return false; }
     }),
     dataDir: './.harness',
+    verbose,
   });
 
   const result = await agentLoop(goal, harness);

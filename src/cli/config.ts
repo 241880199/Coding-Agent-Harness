@@ -42,7 +42,23 @@ export async function configCommand(subcommand: string): Promise<void> {
       console.log('Base URL cleared (will use default).');
       break;
     }
+    case 'set-model': {
+      const model = await question('Enter model name (default: gpt-4o-mini): ');
+      await credMgr.setModel(model.trim());
+      console.log('Model saved.');
+      break;
+    }
+    case 'view-model': {
+      const status = await credMgr.viewModel();
+      console.log(status);
+      break;
+    }
+    case 'clear-model': {
+      await credMgr.clearModel();
+      console.log('Model cleared (will use default: gpt-4o-mini).');
+      break;
+    }
     default:
-      console.log('Usage: harness config set-key|view-key|clear-key|set-url|view-url|clear-url');
+      console.log('Usage: harness config set-key|view-key|clear-key|set-url|view-url|clear-url|set-model|view-model|clear-model');
   }
 }
