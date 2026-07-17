@@ -6,7 +6,7 @@ set "TARGET_DIR=%APPDATA%\npm"
 
 if not exist "%TARGET_DIR%" mkdir "%TARGET_DIR%"
 
-copy /y "%~f0" "%TARGET_DIR%\harness.cmd" >nul 2>&1
+copy /y "%PROJECT_DIR%harness.cmd" "%TARGET_DIR%\harness.cmd" >nul 2>&1
 
 echo.
 echo ========================================

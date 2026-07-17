@@ -1,5 +1,5 @@
 import { Harness, Action, ActionResult, Message, ToolDefinition } from './types.js';
-import { buildContext, compact } from './context.js';
+import { buildContext, compact, estimateTokens } from './context.js';
 
 export interface LoopResult {
   answer: string;
@@ -15,12 +15,13 @@ export async function agentLoop(goal: string, harness: Harness, depth: number = 
   let done = false;
   let answer = '';
   let steps = 0;
+  const recentToolCalls: string[] = [];
   const trace: Array<{ step: number; action: Action; result: ActionResult }> = [];
 
   while (!done && steps < harness.config.maxSteps) {
     steps++;
 
-    if (messages.length > harness.config.tokenLimit) {
+    if (estimateTokens(messages) > harness.config.tokenLimit) {
       messages = compact(messages, harness.config.tokenLimit);
     }
 
@@ -81,6 +82,25 @@ export async function agentLoop(goal: string, harness: Harness, depth: number = 
 
     if (action.type === 'call_tool') {
       const { tool, args } = action;
+      const callSig = `${tool}:${JSON.stringify(args)}`;
+
+      recentToolCalls.push(callSig);
+      if (recentToolCalls.length > 3) recentToolCalls.shift();
+
+      if (
+        recentToolCalls.length === 3 &&
+        recentToolCalls[0] === callSig &&
+        recentToolCalls[1] === callSig
+      ) {
+        messages.push({
+          role: 'user',
+          content: `[Loop detected] You have called '${tool}' with the same arguments 3 times in a row. This indicates a loop. Stop and provide your best answer based on what you know so far, or try a fundamentally different approach.`,
+        });
+        recentToolCalls.length = 0;
+        trace.push({ step: steps, action, result: { success: false, error: 'Loop detected' } });
+        continue;
+      }
+
       let result: ActionResult;
 
       if (harness.tools.get(tool)) {

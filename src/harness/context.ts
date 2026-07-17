@@ -29,7 +29,7 @@ export function buildContext(
   return messages;
 }
 
-function estimateTokens(messages: Message[]): number {
+export function estimateTokens(messages: Message[]): number {
   return messages.reduce((sum, m) => sum + Math.ceil(m.content.length / 4), 0);
 }
 

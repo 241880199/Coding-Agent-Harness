@@ -9,9 +9,7 @@ if not exist "node_modules\" (
     call npm install --silent
 )
 
-if not exist "dist\cli\index.js" (
-    echo [Setup] Building project...
-    call npx tsc
-)
+echo [Setup] Building project...
+call npx tsc
 
 node "%PROJECT_DIR%dist\cli\index.js" %*
