@@ -1,9 +1,9 @@
-import { LLMProvider, LLMResponse, Action } from '../harness/types.js';
+import { LLMProvider, LLMResponse, Action, Message, ToolDefinition } from '../harness/types.js';
 
 type MockMode = 'fixed' | 'fsm' | 'context-aware';
 
 interface ContextAwareRule {
-  match: (context: string[]) => boolean;
+  match: (messages: Message[]) => boolean;
   response: LLMResponse;
 }
 
@@ -30,7 +30,7 @@ export class MockLLM implements LLMProvider {
     }
   }
 
-  async call(context: string[]): Promise<LLMResponse> {
+  async call(messages: Message[], _tools?: ToolDefinition[]): Promise<LLMResponse> {
     if (this.mode === 'fixed') {
       return this.fixedResponse!;
     }
@@ -41,7 +41,7 @@ export class MockLLM implements LLMProvider {
       return this.fsmResponses[this.fsmIndex++];
     }
     for (const rule of this.contextRules) {
-      if (rule.match(context)) {
+      if (rule.match(messages)) {
         return rule.response;
       }
     }

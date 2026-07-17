@@ -1,33 +1,58 @@
+import { Message } from './types.js';
+
 export function buildContext(
   goal: string,
   systemPrompt: string,
   rules: string[],
   memoryContext: string,
   retrievedKnowledge: string,
-): string[] {
-  const context: string[] = [];
+): Message[] {
+  const messages: Message[] = [];
 
-  context.push(`[System] ${systemPrompt}`);
+  let systemContent = systemPrompt;
 
   if (rules.length > 0) {
-    context.push(`[Rules]\n${rules.join('\n')}`);
+    systemContent += `\n\n## Rules\n${rules.join('\n')}`;
   }
 
   if (memoryContext) {
-    context.push(`[Past Knowledge]\n${memoryContext}`);
+    systemContent += `\n\n## Past Knowledge\n${memoryContext}`;
   }
 
   if (retrievedKnowledge) {
-    context.push(`[Retrieved Context]\n${retrievedKnowledge}`);
+    systemContent += `\n\n## Retrieved Context\n${retrievedKnowledge}`;
   }
 
-  context.push(`[Goal] ${goal}`);
-  return context;
+  messages.push({ role: 'system', content: systemContent });
+  messages.push({ role: 'user', content: goal });
+
+  return messages;
 }
 
-export function compact(context: string[], tokenLimit: number): string[] {
-  if (context.length <= tokenLimit) return context;
+function estimateTokens(messages: Message[]): number {
+  return messages.reduce((sum, m) => sum + Math.ceil(m.content.length / 4), 0);
+}
 
-  const tail = context.slice(-(tokenLimit - 2));
-  return [`[Compressed] ${tail.length} messages retained from ${context.length}`, ...tail];
+export function compact(messages: Message[], tokenLimit: number): Message[] {
+  if (estimateTokens(messages) <= tokenLimit) return messages;
+
+  const systemMessages = messages.filter(m => m.role === 'system');
+  const rest = messages.filter(m => m.role !== 'system');
+  const systemTokens = estimateTokens(systemMessages);
+  const availableTokens = Math.max(tokenLimit - systemTokens - 20, 1);
+
+  let kept: Message[] = [];
+  let currentTokens = 0;
+  for (let i = rest.length - 1; i >= 0; i--) {
+    const msgTokens = Math.ceil(rest[i].content.length / 4);
+    if (currentTokens + msgTokens > availableTokens && kept.length > 0) break;
+    kept.unshift(rest[i]);
+    currentTokens += msgTokens;
+  }
+
+  return [
+    ...systemMessages,
+    { role: 'system' as const, content: `[Compressed] ${kept.length} messages retained from ${rest.length}` },
+    ...kept,
+  ];
 }

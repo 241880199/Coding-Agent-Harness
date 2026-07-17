@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { OpenAIProvider } from '../../src/llm/openai.js';
+import { Message } from '../../src/harness/types.js';
 
 describe('OpenAIProvider', () => {
   it('should parse a valid LLM response with action', async () => {
@@ -19,8 +20,8 @@ describe('OpenAIProvider', () => {
         }],
       }),
     });
-    const provider = new OpenAIProvider('sk-test', 'gpt-4o-mini', mockFetch as unknown as typeof fetch);
-    const response = await provider.call(['Read the file']);
+    const provider = new OpenAIProvider('sk-test', 'gpt-4o-mini', undefined, mockFetch as unknown as typeof fetch);
+    const response = await provider.call([{ role: 'user', content: 'Read the file' }]);
     expect(response.text).toBe('I will read the file');
     expect(response.action.type).toBe('call_tool');
     if (response.action.type === 'call_tool') {
@@ -39,8 +40,8 @@ describe('OpenAIProvider', () => {
         }],
       }),
     });
-    const provider = new OpenAIProvider('sk-test', 'gpt-4o-mini', mockFetch as unknown as typeof fetch);
-    const response = await provider.call(['Do something']);
+    const provider = new OpenAIProvider('sk-test', 'gpt-4o-mini', undefined, mockFetch as unknown as typeof fetch);
+    const response = await provider.call([{ role: 'user', content: 'Do something' }]);
     expect(response.text).toBe('Task complete');
     expect(response.action.type).toBe('done');
   });
@@ -51,7 +52,7 @@ describe('OpenAIProvider', () => {
       status: 401,
       json: async () => ({ error: { message: 'Invalid API key' } }),
     });
-    const provider = new OpenAIProvider('sk-test', 'gpt-4o-mini', mockFetch as unknown as typeof fetch);
-    await expect(provider.call(['test'])).rejects.toThrow('API');
+    const provider = new OpenAIProvider('sk-test', 'gpt-4o-mini', undefined, mockFetch as unknown as typeof fetch);
+    await expect(provider.call([{ role: 'user', content: 'test' }])).rejects.toThrow('API');
   });
 });

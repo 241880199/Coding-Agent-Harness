@@ -40,13 +40,30 @@ export interface LLMResponse {
   action: Action;
 }
 
+export type MessageRole = 'system' | 'user' | 'assistant' | 'tool';
+
+export interface Message {
+  role: MessageRole;
+  content: string;
+}
+
+export interface ToolParamDef {
+  type: string;
+  description?: string;
+  properties?: Record<string, ToolParamDef>;
+  required?: string[];
+  items?: ToolParamDef;
+  enum?: string[];
+}
+
 export interface LLMProvider {
-  call(context: string[]): Promise<LLMResponse>;
+  call(messages: Message[], tools?: ToolDefinition[]): Promise<LLMResponse>;
 }
 
 export interface ToolDefinition {
   name: string;
   description: string;
+  parameters: ToolParamDef;
   handler: (args: Record<string, unknown>) => Promise<ActionResult>;
 }
 

@@ -1,18 +1,62 @@
-import { LLMProvider, LLMResponse, Action } from '../harness/types.js';
+import { LLMProvider, LLMResponse, Action, Message, ToolDefinition } from '../harness/types.js';
+
+const SPECIAL_FUNCTIONS = ['take_note', 'spawn_subagent'];
 
 export class OpenAIProvider implements LLMProvider {
   private apiKey: string;
   private model: string;
+  private baseUrl: string;
   private fetchFn: typeof fetch;
 
-  constructor(apiKey: string, model: string = 'gpt-4o-mini', fetchFn: typeof fetch = globalThis.fetch) {
+  constructor(apiKey: string, model: string = 'gpt-4o-mini', baseUrl?: string, fetchFn: typeof fetch = globalThis.fetch) {
     this.apiKey = apiKey;
     this.model = model;
+    this.baseUrl = baseUrl || 'https://api.openai.com/v1';
     this.fetchFn = fetchFn;
   }
 
-  async call(context: string[]): Promise<LLMResponse> {
-    const response = await this.fetchFn('https://api.openai.com/v1/chat/completions', {
+  async call(messages: Message[], tools?: ToolDefinition[]): Promise<LLMResponse> {
+    const toolDefs = tools || [];
+    const functions = [
+      ...toolDefs.map(t => ({
+        type: 'function' as const,
+        function: {
+          name: t.name,
+          description: t.description,
+          parameters: t.parameters,
+        },
+      })),
+      {
+        type: 'function' as const,
+        function: {
+          name: 'take_note',
+          description: 'Record an important fact, decision, or piece of knowledge to persistent memory for future sessions',
+          parameters: {
+            type: 'object',
+            properties: {
+              note: { type: 'string', description: 'The note content to record' },
+            },
+            required: ['note'],
+          },
+        },
+      },
+      {
+        type: 'function' as const,
+        function: {
+          name: 'spawn_subagent',
+          description: 'Delegate a subtask to a sub-agent that runs independently and returns a result',
+          parameters: {
+            type: 'object',
+            properties: {
+              subtask: { type: 'string', description: 'The subtask description for the sub-agent to work on' },
+            },
+            required: ['subtask'],
+          },
+        },
+      },
+    ];
+
+    const response = await this.fetchFn(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -20,22 +64,8 @@ export class OpenAIProvider implements LLMProvider {
       },
       body: JSON.stringify({
         model: this.model,
-        messages: context.map(c => ({ role: 'user', content: c })),
-        tools: [{
-          type: 'function',
-          function: {
-            name: 'call_tool',
-            description: 'Call a tool',
-            parameters: {
-              type: 'object',
-              properties: {
-                tool: { type: 'string' },
-                args: { type: 'object' },
-              },
-              required: ['tool', 'args'],
-            },
-          },
-        }],
+        messages: messages.map(m => ({ role: m.role, content: m.content })),
+        tools: functions,
       }),
     });
 
@@ -50,10 +80,34 @@ export class OpenAIProvider implements LLMProvider {
 
     if (message.tool_calls && message.tool_calls.length > 0) {
       const tc = message.tool_calls[0].function;
-      const args = JSON.parse(tc.arguments);
+
+      let parsedArgs: Record<string, unknown>;
+      try {
+        parsedArgs = JSON.parse(tc.arguments);
+      } catch {
+        return {
+          text: content,
+          action: { type: 'unknown' },
+        };
+      }
+
+      if (tc.name === 'take_note') {
+        return {
+          text: content,
+          action: { type: 'take_note', note: parsedArgs.note as string } as Action,
+        };
+      }
+
+      if (tc.name === 'spawn_subagent') {
+        return {
+          text: content,
+          action: { type: 'spawn_subagent', subtask: parsedArgs.subtask as string } as Action,
+        };
+      }
+
       return {
         text: content,
-        action: { type: 'call_tool', tool: tc.name, args } as Action,
+        action: { type: 'call_tool', tool: tc.name, args: parsedArgs } as Action,
       };
     }
 

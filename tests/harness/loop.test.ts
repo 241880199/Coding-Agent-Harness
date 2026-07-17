@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { agentLoop } from '../../src/harness/loop.js';
 import { MockLLM } from '../../src/llm/mock.js';
-import { ToolRegistry } from '../../src/tools/registry.js';
 import { Guardrail } from '../../src/governance/guardrail.js';
 import { HITL } from '../../src/governance/hitl.js';
 import { Sandbox } from '../../src/sandbox/sandbox.js';
@@ -15,10 +14,11 @@ import { Harness, ToolDefinition } from '../../src/harness/types.js';
 
 describe('agentLoop', () => {
   function createTestHarness(llm: MockLLM, guardrail?: Guardrail): Harness {
-    const tools = new ToolRegistry();
-    tools.register({
+    const tools = new Map<string, ToolDefinition>();
+    tools.set('echo', {
       name: 'echo',
       description: 'echo test',
+      parameters: { type: 'object', properties: { msg: { type: 'string' } }, required: ['msg'] },
       handler: async (args) => ({ success: true, data: `echo: ${args.msg}` }),
     });
 
@@ -47,7 +47,7 @@ describe('agentLoop', () => {
       },
       systemPrompt: 'You are a test agent',
       rules: [],
-      tools: tools as unknown as Map<string, ToolDefinition>,
+      tools,
       mcpTools: new Map(),
       guardrail: { allow: (a) => g.allow(a), override: () => g.override() },
       hooks: [],

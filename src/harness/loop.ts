@@ -1,4 +1,4 @@
-import { Harness, Action, ActionResult } from './types.js';
+import { Harness, Action, ActionResult, Message, ToolDefinition } from './types.js';
 import { buildContext, compact } from './context.js';
 
 export interface LoopResult {
@@ -10,7 +10,7 @@ export interface LoopResult {
 export async function agentLoop(goal: string, harness: Harness, depth: number = 0): Promise<LoopResult> {
   const memoryCtx = harness.memory.read(goal);
   const retrievedCtx = harness.retriever.retrieve(goal);
-  let context = buildContext(goal, harness.systemPrompt, harness.rules, memoryCtx, retrievedCtx);
+  let messages: Message[] = buildContext(goal, harness.systemPrompt, harness.rules, memoryCtx, retrievedCtx);
 
   let done = false;
   let answer = '';
@@ -20,15 +20,20 @@ export async function agentLoop(goal: string, harness: Harness, depth: number = 
   while (!done && steps < harness.config.maxSteps) {
     steps++;
 
-    if (context.length > harness.config.tokenLimit) {
-      context = compact(context, harness.config.tokenLimit);
+    if (messages.length > harness.config.tokenLimit) {
+      messages = compact(messages, harness.config.tokenLimit);
     }
+
+    const allTools: ToolDefinition[] = [
+      ...harness.tools.values(),
+      ...harness.mcpTools.values(),
+    ];
 
     let response;
     try {
-      response = await harness.config.llmProvider.call(context);
+      response = await harness.config.llmProvider.call(messages, allTools);
     } catch (e) {
-      context.push(`[Error] LLM call failed: ${(e as Error).message}`);
+      messages.push({ role: 'user', content: `[Error] LLM call failed: ${(e as Error).message}` });
       (harness.tracer as any).record(
         { type: 'unknown' },
         { success: false, error: (e as Error).message },
@@ -38,6 +43,8 @@ export async function agentLoop(goal: string, harness: Harness, depth: number = 
 
     const { text, action } = response;
     (harness.tracer as any).record(action, { success: true, data: text });
+
+    messages.push({ role: 'assistant', content: text });
 
     if (action.type === 'done') {
       done = true;
@@ -49,14 +56,14 @@ export async function agentLoop(goal: string, harness: Harness, depth: number = 
     if (action.type === 'take_note') {
       const note = (action as any).note as string;
       harness.memory.write(note, (harness.tracer as any).sessionId);
-      context.push(`[Note] ${note}`);
+      messages.push({ role: 'user', content: `[Note recorded] ${note}` });
       trace.push({ step: steps, action, result: { success: true, data: `Note recorded: ${note}` } });
       continue;
     }
 
     const guardResult = harness.guardrail.allow(action);
     if (!guardResult.allow) {
-      context.push(`[Guardrail] Action blocked: ${guardResult.reason}`);
+      messages.push({ role: 'user', content: `[Guardrail] Action blocked: ${guardResult.reason}` });
       trace.push({ step: steps, action, result: { success: false, error: guardResult.reason } });
       continue;
     }
@@ -65,7 +72,7 @@ export async function agentLoop(goal: string, harness: Harness, depth: number = 
     for (const hook of harness.hooks) {
       const result = await hook('PreToolUse', { action });
       if (result === 'deny') {
-        context.push(`[Hook] Action denied by PreToolUse hook`);
+        messages.push({ role: 'user', content: `[Hook] Action denied by PreToolUse hook` });
         hookDenied = true;
         break;
       }
@@ -86,7 +93,7 @@ export async function agentLoop(goal: string, harness: Harness, depth: number = 
         result = { success: false, error: `Tool '${tool}' not found` };
       }
 
-      context.push(`[Tool Result] ${result.success ? result.data : result.error}`);
+      messages.push({ role: 'tool', content: result.success ? (result.data || '') : (result.error || '') });
       trace.push({ step: steps, action, result });
 
       for (const hook of harness.hooks) {
@@ -101,23 +108,23 @@ export async function agentLoop(goal: string, harness: Harness, depth: number = 
       const skill = harness.skills.get(skillName);
       if (skill) {
         const instructions = skill.load();
-        context.push(`[Skill] ${skillName}\n${instructions}`);
+        messages.push({ role: 'user', content: `[Skill] ${skillName}\n${instructions}` });
       } else {
-        context.push(`[Skill] Unknown skill: ${skillName}`);
+        messages.push({ role: 'user', content: `[Skill] Unknown skill: ${skillName}` });
       }
       trace.push({ step: steps, action, result: { success: true, data: `Loaded skill: ${skillName}` } });
     } else if (action.type === 'spawn_subagent') {
       if (depth >= harness.config.maxDepth) {
-        context.push(`[Subagent] Max depth reached, cannot spawn subagent`);
+        messages.push({ role: 'user', content: `[Subagent] Max depth reached, cannot spawn subagent` });
         trace.push({ step: steps, action, result: { success: false, error: 'Max depth reached' } });
         continue;
       }
       const subtask = (action as any).subtask as string;
       const subResult = await agentLoop(subtask, harness, depth + 1);
-      context.push(`[Subagent] ${subResult.answer}`);
+      messages.push({ role: 'user', content: `[Subagent] ${subResult.answer}` });
       trace.push({ step: steps, action, result: { success: true, data: subResult.answer } });
     } else {
-      context.push(`[Unknown] Unknown action type: ${(action as any).type}`);
+      messages.push({ role: 'user', content: `[Unknown] Unknown action type: ${(action as any).type}` });
       trace.push({ step: steps, action, result: { success: false, error: 'Unknown action type' } });
     }
   }
@@ -130,7 +137,7 @@ export async function agentLoop(goal: string, harness: Harness, depth: number = 
     await hook('SessionEnd', {});
   }
 
-  harness.memory.consolidate(context, (harness.tracer as any).sessionId);
+  harness.memory.consolidate(messages.map(m => m.content), (harness.tracer as any).sessionId);
 
   return { answer, steps, trace };
 }

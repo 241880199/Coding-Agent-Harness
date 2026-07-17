@@ -6,7 +6,7 @@ import { OpenAIProvider } from '../llm/openai.js';
 import { Harness } from '../harness/types.js';
 import fs from 'fs';
 
-export async function replCommand(): Promise<void> {
+export async function replCommand(maxStepsOverride?: number): Promise<void> {
   const credMgr = new CredentialManager();
   let apiKey = await credMgr.getKey();
 
@@ -30,7 +30,9 @@ export async function replCommand(): Promise<void> {
   console.log('========================================\n');
 
   const project = process.cwd().split(/[/\\]/).pop() || 'default';
-  let harness = await createHarness(project, apiKey);
+  const baseUrl = await credMgr.getBaseUrl();
+  const maxSteps = maxStepsOverride || 200;
+  let harness = await createHarness(project, apiKey, baseUrl, maxSteps);
 
   const rl = readline.createInterface({
     input: process.stdin,
@@ -56,7 +58,7 @@ export async function replCommand(): Promise<void> {
       switch (action) {
         case '/new-session':
           console.log('[Session] Starting new session...\n');
-          harness = await createHarness(project, apiKey);
+          harness = await createHarness(project, apiKey, baseUrl, maxSteps);
           rl.prompt();
           return;
 
@@ -106,12 +108,12 @@ Examples:
   });
 }
 
-async function createHarness(project: string, apiKey: string): Promise<Harness> {
-  const llmProvider = new OpenAIProvider(apiKey);
+async function createHarness(project: string, apiKey: string, baseUrl: string | null, maxSteps: number): Promise<Harness> {
+  const llmProvider = new OpenAIProvider(apiKey, 'gpt-4o-mini', baseUrl || undefined);
   return await buildAgent({
     project,
     llmProvider,
-    maxSteps: 50,
+    maxSteps,
     maxDepth: 3,
     tokenLimit: 128000,
     ruleFiles: ['CLAUDE.md', 'AGENTS.md'].filter(f => {

@@ -13,7 +13,18 @@ import { KnowledgeManager } from '../memory/knowledge.js';
 import { Retriever } from '../memory/retriever.js';
 
 export async function buildAgent(config: HarnessConfig): Promise<Harness> {
-  const systemPrompt = 'You are a coding agent. You have access to tools. Use them to accomplish the user\'s goal.';
+  const systemPrompt = `You are a coding agent with access to tools for reading/writing files and executing shell commands.
+
+## How to work
+- Use tools when you need to interact with the filesystem (read files, write files, run commands).
+- Answer directly with text when you don't need tools — just write your response without calling any tool.
+- Use take_note to record important decisions, conventions, or lessons learned.
+- Use spawn_subagent to delegate independent subtasks to a sub-agent.
+
+## Important
+- Always provide your final answer as plain text without calling a tool. This signals task completion.
+- If a tool fails, analyze the error and try a different approach rather than repeating the same call.`;
+
   const rules: string[] = [];
 
   for (const ruleFile of config.ruleFiles) {
@@ -26,9 +37,43 @@ export async function buildAgent(config: HarnessConfig): Promise<Harness> {
   }
 
   const tools = new Map<string, ToolDefinition>();
-  tools.set('read_file', { name: 'read_file', description: 'Read a file from disk', handler: readFileHandler });
-  tools.set('write_file', { name: 'write_file', description: 'Write content to a file', handler: writeFileHandler });
-  tools.set('bash', { name: 'bash', description: 'Execute a shell command', handler: bashHandler });
+  tools.set('read_file', {
+    name: 'read_file',
+    description: 'Read the contents of a file from disk',
+    parameters: {
+      type: 'object',
+      properties: {
+        path: { type: 'string', description: 'Absolute or relative path to the file' },
+      },
+      required: ['path'],
+    },
+    handler: readFileHandler,
+  });
+  tools.set('write_file', {
+    name: 'write_file',
+    description: 'Write content to a file, creating parent directories if needed',
+    parameters: {
+      type: 'object',
+      properties: {
+        path: { type: 'string', description: 'Path to the file to write' },
+        content: { type: 'string', description: 'Content to write to the file' },
+      },
+      required: ['path', 'content'],
+    },
+    handler: writeFileHandler,
+  });
+  tools.set('bash', {
+    name: 'bash',
+    description: 'Execute a shell command and return its output',
+    parameters: {
+      type: 'object',
+      properties: {
+        command: { type: 'string', description: 'The shell command to execute' },
+      },
+      required: ['command'],
+    },
+    handler: bashHandler,
+  });
 
   const guardrail = new Guardrail();
   const sandbox = new Sandbox({ timeout: 30000 });

@@ -4,27 +4,40 @@ export interface ParsedArgs {
   subcommand?: string;
   sessionId?: string;
   projectName?: string;
+  maxSteps?: number;
 }
 
 export function parseArgs(argv: string[]): ParsedArgs {
   if (argv.length === 0) return { command: 'repl' };
 
-  const cmd = argv[0];
-
-  if (cmd === 'start' && argv[1]) {
-    return { command: 'start', goal: argv.slice(1).join(' ') };
+  let maxSteps: number | undefined;
+  const flags: string[] = [];
+  const positional: string[] = [];
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === '--max-steps' && argv[i + 1]) {
+      maxSteps = parseInt(argv[i + 1], 10) || undefined;
+      i++;
+    } else {
+      positional.push(argv[i]);
+    }
   }
 
-  if (cmd === 'config' && argv[1]) {
-    return { command: 'config', subcommand: argv[1] };
+  const cmd = positional[0];
+
+  if (cmd === 'start' && positional[1]) {
+    return { command: 'start', goal: positional.slice(1).join(' '), maxSteps };
   }
 
-  if (cmd === 'trace' && argv[1]) {
-    return { command: 'trace', sessionId: argv[1] };
+  if (cmd === 'config' && positional[1]) {
+    return { command: 'config', subcommand: positional[1] };
   }
 
-  if (cmd === 'init' && argv[1]) {
-    return { command: 'init', projectName: argv[1] };
+  if (cmd === 'trace' && positional[1]) {
+    return { command: 'trace', sessionId: positional[1] };
+  }
+
+  if (cmd === 'init' && positional[1]) {
+    return { command: 'init', projectName: positional[1] };
   }
 
   return { command: 'help' };
@@ -36,12 +49,12 @@ async function main() {
   switch (args.command) {
     case 'repl': {
       const { replCommand } = await import('./repl.js');
-      await replCommand();
+      await replCommand(args.maxSteps);
       break;
     }
     case 'start': {
       const { startCommand } = await import('./start.js');
-      await startCommand(args.goal!);
+      await startCommand(args.goal!, args.maxSteps);
       break;
     }
     case 'config': {
@@ -61,13 +74,17 @@ async function main() {
     }
     default:
       console.log(`Usage:
-  harness                      Start interactive REPL mode
-  harness start <goal>         Run a single coding task
-  harness config set-key       Set API key (hidden input)
-  harness config view-key      View key status (no plaintext)
-  harness config clear-key     Clear stored API key
-  harness trace <session>      View trace for a session
-  harness init <project>       Initialize a new project`);
+  harness                        Start interactive REPL mode
+  harness start <goal>           Run a single coding task
+  harness start --max-steps N    Set max steps (default: 200)
+  harness config set-key         Set API key (hidden input)
+  harness config view-key        View key status (no plaintext)
+  harness config clear-key       Clear stored API key
+  harness config set-url         Set LLM provider Base URL
+  harness config view-url        View current Base URL
+  harness config clear-url       Clear Base URL (use default)
+  harness trace <session>        View trace for a session
+  harness init <project>         Initialize a new project`);
   }
 }
 
