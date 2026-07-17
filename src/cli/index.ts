@@ -7,7 +7,7 @@ export interface ParsedArgs {
 }
 
 export function parseArgs(argv: string[]): ParsedArgs {
-  if (argv.length === 0) return { command: 'help' };
+  if (argv.length === 0) return { command: 'repl' };
 
   const cmd = argv[0];
 
@@ -34,6 +34,11 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
 
   switch (args.command) {
+    case 'repl': {
+      const { replCommand } = await import('./repl.js');
+      await replCommand();
+      break;
+    }
     case 'start': {
       const { startCommand } = await import('./start.js');
       await startCommand(args.goal!);
@@ -56,12 +61,13 @@ async function main() {
     }
     default:
       console.log(`Usage:
-  harness start <goal>       Start the coding agent
-  harness config set-key     Set API key (hidden input)
-  harness config view-key    View key status (no plaintext)
-  harness config clear-key   Clear stored API key
-  harness trace <session>    View trace for a session
-  harness init <project>     Initialize a new project`);
+  harness                      Start interactive REPL mode
+  harness start <goal>         Run a single coding task
+  harness config set-key       Set API key (hidden input)
+  harness config view-key      View key status (no plaintext)
+  harness config clear-key     Clear stored API key
+  harness trace <session>      View trace for a session
+  harness init <project>       Initialize a new project`);
   }
 }
 
