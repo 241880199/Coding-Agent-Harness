@@ -32,8 +32,8 @@ describe('CLI argument parsing', () => {
     expect(args.projectName).toBe('my-project');
   });
 
-  it('should show help with no args', () => {
+  it('should return repl command with no args', () => {
     const args = parseArgs([]);
-    expect(args.command).toBe('help');
+    expect(args.command).toBe('repl');
   });
 });
