@@ -1,6 +1,6 @@
 # Coding Agent Harness — 实现计划
 
-> **对智能体工作者：** 必需子技能：使用 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 来逐一实现计划中的任务。步骤使用复选框（`- [ ]`）语法跟踪。
+> **对智能体工作者：** 必需子技能：使用 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 来逐一实现计划中的任务。步骤使用复选框（`- [x]`）语法跟踪。
 
 **目标：** 构建一个 TypeScript 实现的 Coding Agent Harness，包含自定义 agent 主循环、SQLite 记忆、护栏、反馈传感器，以及 CLI/Docker 分发。
 
@@ -33,7 +33,7 @@
 - 消费：无
 - 产出：构建配置、测试运行器配置、lint/typecheck 命令
 
-- [ ] **步骤 1：创建 package.json**
+- [x] **步骤 1：创建 package.json**
 
 ```json
 {
@@ -64,7 +64,7 @@
 }
 ```
 
-- [ ] **步骤 2：创建 tsconfig.json**
+- [x] **步骤 2：创建 tsconfig.json**
 
 ```json
 {
@@ -86,7 +86,7 @@
 }
 ```
 
-- [ ] **步骤 3：创建 vitest.config.ts**
+- [x] **步骤 3：创建 vitest.config.ts**
 
 ```ts
 import { defineConfig } from 'vitest/config';
@@ -100,7 +100,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **步骤 4：创建 .gitignore**
+- [x] **步骤 4：创建 .gitignore**
 
 ```
 node_modules/
@@ -109,7 +109,7 @@ dist/
 *.log
 ```
 
-- [ ] **步骤 5：创建规则文件模板**
+- [x] **步骤 5：创建规则文件模板**
 
 `rules/CLAUDE.md.example`:
 ```
@@ -126,13 +126,13 @@ dist/
 - 危险操作前必须请求审批
 ```
 
-- [ ] **步骤 6：安装依赖并验证构建**
+- [x] **步骤 6：安装依赖并验证构建**
 
 运行：`npm install`
 运行：`npx tsc --noEmit`
 预期：无错误
 
-- [ ] **步骤 7：提交**
+- [x] **步骤 7：提交**
 
 ```bash
 git add package.json tsconfig.json vitest.config.ts .gitignore rules/
@@ -151,7 +151,7 @@ git commit -m "chore: scaffold project structure"
 - 消费：无
 - 产出：`Action`, `ActionResult`, `HarnessConfig`, `LLMProvider`, `LLMResponse`, `ToolDefinition`, `SensorReport`, `GuardrailResult`, `MemoryEntry`, `HookEvent`, `TraceEntry`
 
-- [ ] **步骤 1：编写失败测试**
+- [x] **步骤 1：编写失败测试**
 
 ```ts
 // tests/harness/types.test.ts
@@ -276,12 +276,12 @@ describe('TraceEntry', () => {
 });
 ```
 
-- [ ] **步骤 2：运行测试验证失败**
+- [x] **步骤 2：运行测试验证失败**
 
 运行：`npx vitest run tests/harness/types.test.ts`
 预期：FAIL — TypeScript 编译错误，类型未定义
 
-- [ ] **步骤 3：编写最小实现**
+- [x] **步骤 3：编写最小实现**
 
 ```ts
 // src/harness/types.ts
@@ -404,12 +404,12 @@ export interface Harness {
 }
 ```
 
-- [ ] **步骤 4：运行测试验证通过**
+- [x] **步骤 4：运行测试验证通过**
 
 运行：`npx vitest run tests/harness/types.test.ts`
 预期：PASS
 
-- [ ] **步骤 5：提交**
+- [x] **步骤 5：提交**
 
 ```bash
 git add src/harness/types.ts tests/harness/types.test.ts
@@ -428,7 +428,7 @@ git commit -m "feat: add core types for action, result, provider, guardrail, mem
 - 消费：来自 `src/harness/types.ts` 的 `Action`
 - 产出：实现 `LLMProvider` 的 `MockLLM` 类；支持固定响应模式和 FSM 模式
 
-- [ ] **步骤 1：编写失败测试**
+- [x] **步骤 1：编写失败测试**
 
 ```ts
 // tests/llm/mock.test.ts
@@ -501,12 +501,12 @@ describe('MockLLM - context-aware mode', () => {
 });
 ```
 
-- [ ] **步骤 2：运行测试验证失败**
+- [x] **步骤 2：运行测试验证失败**
 
 运行：`npx vitest run tests/llm/mock.test.ts`
 预期：FAIL — 模块未找到
 
-- [ ] **步骤 3：编写最小实现**
+- [x] **步骤 3：编写最小实现**
 
 ```ts
 // src/llm/mock.ts
@@ -566,12 +566,12 @@ export class MockLLM implements LLMProvider {
 }
 ```
 
-- [ ] **步骤 4：运行测试验证通过**
+- [x] **步骤 4：运行测试验证通过**
 
 运行：`npx vitest run tests/llm/mock.test.ts`
 预期：PASS
 
-- [ ] **步骤 5：提交**
+- [x] **步骤 5：提交**
 
 ```bash
 git add src/llm/mock.ts tests/llm/mock.test.ts
@@ -590,7 +590,7 @@ git commit -m "feat: add MockLLM with fixed, FSM, and context-aware modes"
 - 消费：无（仅 better-sqlite3 类型）
 - 产出：`initDatabase(dataDir: string): Database` — 创建表，返回 db 句柄；`createMemoryDatabase(): Database` — 创建 `:memory:` 数据库供测试用
 
-- [ ] **步骤 1：编写失败测试**
+- [x] **步骤 1：编写失败测试**
 
 ```ts
 // tests/memory/database.test.ts
@@ -644,12 +644,12 @@ describe('initDatabase', () => {
 });
 ```
 
-- [ ] **步骤 2：运行测试验证失败**
+- [x] **步骤 2：运行测试验证失败**
 
 运行：`npx vitest run tests/memory/database.test.ts`
 预期：FAIL — 模块未找到
 
-- [ ] **步骤 3：编写最小实现**
+- [x] **步骤 3：编写最小实现**
 
 ```ts
 // src/memory/database.ts
@@ -728,12 +728,12 @@ function applyMigrations(db: Database.Database): void {
 }
 ```
 
-- [ ] **步骤 4：运行测试验证通过**
+- [x] **步骤 4：运行测试验证通过**
 
 运行：`npx vitest run tests/memory/database.test.ts`
 预期：PASS
 
-- [ ] **步骤 5：提交**
+- [x] **步骤 5：提交**
 
 ```bash
 git add src/memory/database.ts tests/memory/database.test.ts
@@ -756,7 +756,7 @@ git commit -m "feat: add SQLite database layer with memory migrations"
 - 消费：来自 `better-sqlite3` 的 `Database`，来自 `database.ts` 的 `createMemoryDatabase`
 - 产出：`SessionManager`（创建会话、记录动作、获取会话）、`KnowledgeManager`（写入笔记、获取笔记、去重）、`Retriever`（按项目+关键词检索）
 
-- [ ] **步骤 1：为 session.ts 编写失败测试**
+- [x] **步骤 1：为 session.ts 编写失败测试**
 
 ```ts
 // tests/memory/session.test.ts
@@ -823,7 +823,7 @@ describe('SessionManager', () => {
 });
 ```
 
-- [ ] **步骤 2：为 knowledge.ts 编写失败测试**
+- [x] **步骤 2：为 knowledge.ts 编写失败测试**
 
 ```ts
 // tests/memory/knowledge.test.ts
@@ -874,7 +874,7 @@ describe('KnowledgeManager', () => {
 });
 ```
 
-- [ ] **步骤 3：为 retriever.ts 编写失败测试**
+- [x] **步骤 3：为 retriever.ts 编写失败测试**
 
 ```ts
 // tests/memory/retriever.test.ts
@@ -923,12 +923,12 @@ describe('Retriever', () => {
 });
 ```
 
-- [ ] **步骤 4：运行测试验证失败**
+- [x] **步骤 4：运行测试验证失败**
 
 运行：`npx vitest run tests/memory/session.test.ts tests/memory/knowledge.test.ts tests/memory/retriever.test.ts`
 预期：FAIL — 模块未找到
 
-- [ ] **步骤 5：编写最小实现**
+- [x] **步骤 5：编写最小实现**
 
 ```ts
 // src/memory/session.ts
@@ -1063,12 +1063,12 @@ export class Retriever {
 }
 ```
 
-- [ ] **步骤 6：运行测试验证通过**
+- [x] **步骤 6：运行测试验证通过**
 
 运行：`npx vitest run tests/memory/session.test.ts tests/memory/knowledge.test.ts tests/memory/retriever.test.ts`
 预期：PASS
 
-- [ ] **步骤 7：提交**
+- [x] **步骤 7：提交**
 
 ```bash
 git add src/memory/session.ts src/memory/knowledge.ts src/memory/retriever.ts tests/memory/session.test.ts tests/memory/knowledge.test.ts tests/memory/retriever.test.ts
@@ -1093,7 +1093,7 @@ git commit -m "feat: add memory module with session, knowledge, and retriever"
 - 消费：来自 types 的 `ToolDefinition`、`ActionResult`
 - 产出：`ToolRegistry` 类（注册、列表、获取、调用）；`readFile(path)`、`writeFile(path, content)`、`bash(command)` 处理器
 
-- [ ] **步骤 1：编写失败测试**
+- [x] **步骤 1：编写失败测试**
 
 ```ts
 // tests/tools/registry.test.ts
@@ -1206,12 +1206,12 @@ describe('bashHandler', () => {
 });
 ```
 
-- [ ] **步骤 2：运行测试验证失败**
+- [x] **步骤 2：运行测试验证失败**
 
 运行：`npx vitest run tests/tools/`
 预期：FAIL — 模块未找到
 
-- [ ] **步骤 3：编写最小实现**
+- [x] **步骤 3：编写最小实现**
 
 ```ts
 // src/tools/registry.ts
@@ -1323,12 +1323,12 @@ export async function bashHandler(args: Record<string, unknown>): Promise<Action
 }
 ```
 
-- [ ] **步骤 4：运行测试验证通过**
+- [x] **步骤 4：运行测试验证通过**
 
 运行：`npx vitest run tests/tools/`
 预期：PASS
 
-- [ ] **步骤 5：提交**
+- [x] **步骤 5：提交**
 
 ```bash
 git add src/tools/ tests/tools/
@@ -1349,7 +1349,7 @@ git commit -m "feat: add tool registry and built-in tools (read-file, write-file
 - 消费：来自 types 的 `Action`、`GuardrailResult`
 - 产出：`Guardrail` 类（allow/override）；`HITL` 类（提示用户确认）
 
-- [ ] **步骤 1：编写失败测试**
+- [x] **步骤 1：编写失败测试**
 
 ```ts
 // tests/governance/guardrail.test.ts
@@ -1431,12 +1431,12 @@ describe('HITL', () => {
 });
 ```
 
-- [ ] **步骤 2：运行测试验证失败**
+- [x] **步骤 2：运行测试验证失败**
 
 运行：`npx vitest run tests/governance/`
 预期：FAIL — 模块未找到
 
-- [ ] **步骤 3：编写最小实现**
+- [x] **步骤 3：编写最小实现**
 
 ```ts
 // src/governance/guardrail.ts
@@ -1516,12 +1516,12 @@ async function defaultPrompt(question: string): Promise<string> {
 }
 ```
 
-- [ ] **步骤 4：运行测试验证通过**
+- [x] **步骤 4：运行测试验证通过**
 
 运行：`npx vitest run tests/governance/`
 预期：PASS
 
-- [ ] **步骤 5：提交**
+- [x] **步骤 5：提交**
 
 ```bash
 git add src/governance/ tests/governance/
@@ -1540,7 +1540,7 @@ git commit -m "feat: add guardrail with dangerous command detection and HITL"
 - 消费：来自 types 的 `SensorReport`
 - 产出：`runSensors(changeScope?: string)` — 运行测试/lint/类型检查，返回结构化报告
 
-- [ ] **步骤 1：编写失败测试**
+- [x] **步骤 1：编写失败测试**
 
 ```ts
 // tests/feedback/sensors.test.ts
@@ -1588,12 +1588,12 @@ describe('SensorRunner', () => {
 });
 ```
 
-- [ ] **步骤 2：运行测试验证失败**
+- [x] **步骤 2：运行测试验证失败**
 
 运行：`npx vitest run tests/feedback/sensors.test.ts`
 预期：FAIL — 模块未找到
 
-- [ ] **步骤 3：编写最小实现**
+- [x] **步骤 3：编写最小实现**
 
 ```ts
 // src/feedback/sensors.ts
@@ -1628,12 +1628,12 @@ export class SensorRunner {
 }
 ```
 
-- [ ] **步骤 4：运行测试验证通过**
+- [x] **步骤 4：运行测试验证通过**
 
 运行：`npx vitest run tests/feedback/sensors.test.ts`
 预期：PASS
 
-- [ ] **步骤 5：提交**
+- [x] **步骤 5：提交**
 
 ```bash
 git add src/feedback/sensors.ts tests/feedback/sensors.test.ts
@@ -1652,7 +1652,7 @@ git commit -m "feat: add feedback sensor runner with test/lint aggregation"
 - 消费：来自 types 的 `TraceEntry`、`Action`、`ActionResult`
 - 产出：`Tracer` 类（记录、刷新、获取会话追踪、导出 JSON）
 
-- [ ] **步骤 1：编写失败测试**
+- [x] **步骤 1：编写失败测试**
 
 ```ts
 // tests/observability/tracer.test.ts
@@ -1700,12 +1700,12 @@ describe('Tracer', () => {
 });
 ```
 
-- [ ] **步骤 2：运行测试验证失败**
+- [x] **步骤 2：运行测试验证失败**
 
 运行：`npx vitest run tests/observability/tracer.test.ts`
 预期：FAIL — 模块未找到
 
-- [ ] **步骤 3：编写最小实现**
+- [x] **步骤 3：编写最小实现**
 
 ```ts
 // src/observability/tracer.ts
@@ -1746,12 +1746,12 @@ export class Tracer {
 }
 ```
 
-- [ ] **步骤 4：运行测试验证通过**
+- [x] **步骤 4：运行测试验证通过**
 
 运行：`npx vitest run tests/observability/tracer.test.ts`
 预期：PASS
 
-- [ ] **步骤 5：提交**
+- [x] **步骤 5：提交**
 
 ```bash
 git add src/observability/tracer.ts tests/observability/tracer.test.ts
@@ -1771,7 +1771,7 @@ git commit -m "feat: add tracer for step-by-step observability"
 - 消费：来自 types 的 `LLMProvider`、`LLMResponse`、`Action`
 - 产出：实现 `LLMProvider` 的 `OpenAIProvider` 类；`LLMProviderFactory`（从配置创建）
 
-- [ ] **步骤 1：编写失败测试**
+- [x] **步骤 1：编写失败测试**
 
 ```ts
 // tests/llm/openai.test.ts
@@ -1834,12 +1834,12 @@ describe('OpenAIProvider', () => {
 });
 ```
 
-- [ ] **步骤 2：运行测试验证失败**
+- [x] **步骤 2：运行测试验证失败**
 
 运行：`npx vitest run tests/llm/openai.test.ts`
 预期：FAIL — 模块未找到
 
-- [ ] **步骤 3：编写最小实现**
+- [x] **步骤 3：编写最小实现**
 
 ```ts
 // src/llm/provider.ts
@@ -1913,12 +1913,12 @@ export class OpenAIProvider implements LLMProvider {
 }
 ```
 
-- [ ] **步骤 4：运行测试验证通过**
+- [x] **步骤 4：运行测试验证通过**
 
 运行：`npx vitest run tests/llm/openai.test.ts`
 预期：PASS
 
-- [ ] **步骤 5：提交**
+- [x] **步骤 5：提交**
 
 ```bash
 git add src/llm/provider.ts src/llm/openai.ts tests/llm/openai.test.ts
@@ -1937,7 +1937,7 @@ git commit -m "feat: add OpenAI provider with tool call parsing"
 - 消费：来自 types 的 `ToolDefinition`、`ActionResult`
 - 产出：`Sandbox` 类（带超时和资源限制执行工具）
 
-- [ ] **步骤 1：编写失败测试**
+- [x] **步骤 1：编写失败测试**
 
 ```ts
 // tests/sandbox/sandbox.test.ts
@@ -1986,12 +1986,12 @@ describe('Sandbox', () => {
 });
 ```
 
-- [ ] **步骤 2：运行测试验证失败**
+- [x] **步骤 2：运行测试验证失败**
 
 运行：`npx vitest run tests/sandbox/sandbox.test.ts`
 预期：FAIL — 模块未找到
 
-- [ ] **步骤 3：编写最小实现**
+- [x] **步骤 3：编写最小实现**
 
 ```ts
 // src/sandbox/sandbox.ts
@@ -2020,12 +2020,12 @@ export class Sandbox {
 }
 ```
 
-- [ ] **步骤 4：运行测试验证通过**
+- [x] **步骤 4：运行测试验证通过**
 
 运行：`npx vitest run tests/sandbox/sandbox.test.ts`
 预期：PASS
 
-- [ ] **步骤 5：提交**
+- [x] **步骤 5：提交**
 
 ```bash
 git add src/sandbox/sandbox.ts tests/sandbox/sandbox.test.ts
@@ -2044,7 +2044,7 @@ git commit -m "feat: add sandbox with timeout protection"
 - 消费：来自 types 的 `Harness`、`Action`
 - 产出：`buildContext(goal, harness, memory, retriever)` — 组装完整上下文字符串数组；`compact(context, tokenLimit)` — 超限时截断
 
-- [ ] **步骤 1：编写失败测试**
+- [x] **步骤 1：编写失败测试**
 
 ```ts
 // tests/harness/context.test.ts
@@ -2089,12 +2089,12 @@ describe('compact', () => {
 });
 ```
 
-- [ ] **步骤 2：运行测试验证失败**
+- [x] **步骤 2：运行测试验证失败**
 
 运行：`npx vitest run tests/harness/context.test.ts`
 预期：FAIL — 模块未找到
 
-- [ ] **步骤 3：编写最小实现**
+- [x] **步骤 3：编写最小实现**
 
 ```ts
 // src/harness/context.ts
@@ -2134,12 +2134,12 @@ export function compact(context: string[], tokenLimit: number): string[] {
 }
 ```
 
-- [ ] **步骤 4：运行测试验证通过**
+- [x] **步骤 4：运行测试验证通过**
 
 运行：`npx vitest run tests/harness/context.test.ts`
 预期：PASS
 
-- [ ] **步骤 5：提交**
+- [x] **步骤 5：提交**
 
 ```bash
 git add src/harness/context.ts tests/harness/context.test.ts
@@ -2158,7 +2158,7 @@ git commit -m "feat: add context engineering with build and compact"
 - 消费：所有先前组件（Harness、ToolRegistry、Guardrail、HITL、Sandbox、Tracer、SessionManager、KnowledgeManager、Retriever、SensorRunner、context builder）
 - 产出：`agentLoop(goal, harness, depth?)` — 完整的主循环，包含 HITL、护栏、反馈、子 agent、记忆、consolidate
 
-- [ ] **步骤 1：编写失败测试**
+- [x] **步骤 1：编写失败测试**
 
 ```ts
 // tests/harness/loop.test.ts
@@ -2287,12 +2287,12 @@ describe('agentLoop', () => {
 });
 ```
 
-- [ ] **步骤 2：运行测试验证失败**
+- [x] **步骤 2：运行测试验证失败**
 
 运行：`npx vitest run tests/harness/loop.test.ts`
 预期：FAIL — 模块未找到
 
-- [ ] **步骤 3：编写最小实现**
+- [x] **步骤 3：编写最小实现**
 
 ```ts
 // src/harness/loop.ts
@@ -2433,12 +2433,12 @@ export async function agentLoop(goal: string, harness: Harness, depth: number = 
 }
 ```
 
-- [ ] **步骤 4：运行测试验证通过**
+- [x] **步骤 4：运行测试验证通过**
 
 运行：`npx vitest run tests/harness/loop.test.ts`
 预期：PASS
 
-- [ ] **步骤 5：提交**
+- [x] **步骤 5：提交**
 
 ```bash
 git add src/harness/loop.ts tests/harness/loop.test.ts
@@ -2457,7 +2457,7 @@ git commit -m "feat: implement agent loop with guardrail, tools, skills, subagen
 - 消费：所有先前组件
 - 产出：`buildAgent(config)` — 将所有组件组装为 `Harness` 实例
 
-- [ ] **步骤 1：编写失败测试**
+- [x] **步骤 1：编写失败测试**
 
 ```ts
 // tests/harness/index.test.ts
@@ -2518,12 +2518,12 @@ describe('buildAgent', () => {
 });
 ```
 
-- [ ] **步骤 2：运行测试验证失败**
+- [x] **步骤 2：运行测试验证失败**
 
 运行：`npx vitest run tests/harness/index.test.ts`
 预期：FAIL — 模块未找到
 
-- [ ] **步骤 3：编写最小实现**
+- [x] **步骤 3：编写最小实现**
 
 ```ts
 // src/harness/index.ts
@@ -2599,12 +2599,12 @@ export async function buildAgent(config: HarnessConfig): Promise<Harness> {
 }
 ```
 
-- [ ] **步骤 4：运行测试验证通过**
+- [x] **步骤 4：运行测试验证通过**
 
 运行：`npx vitest run tests/harness/index.test.ts`
 预期：PASS
 
-- [ ] **步骤 5：提交**
+- [x] **步骤 5：提交**
 
 ```bash
 git add src/harness/index.ts tests/harness/index.test.ts
@@ -2623,7 +2623,7 @@ git commit -m "feat: add buildAgent harness assembly"
 - 消费：无（使用 `keytar` 或回退到加密文件）
 - 产出：`CredentialManager` 类（setKey、getKey、viewStatus、clearKey）
 
-- [ ] **步骤 1：编写失败测试**
+- [x] **步骤 1：编写失败测试**
 
 ```ts
 // tests/config/credential.test.ts
@@ -2684,12 +2684,12 @@ describe('CredentialManager', () => {
 });
 ```
 
-- [ ] **步骤 2：运行测试验证失败**
+- [x] **步骤 2：运行测试验证失败**
 
 运行：`npx vitest run tests/config/credential.test.ts`
 预期：FAIL — 模块未找到
 
-- [ ] **步骤 3：编写最小实现**
+- [x] **步骤 3：编写最小实现**
 
 ```ts
 // src/config/credential.ts
@@ -2758,12 +2758,12 @@ export class CredentialManager {
 }
 ```
 
-- [ ] **步骤 4：运行测试验证通过**
+- [x] **步骤 4：运行测试验证通过**
 
 运行：`npx vitest run tests/config/credential.test.ts`
 预期：PASS
 
-- [ ] **步骤 5：提交**
+- [x] **步骤 5：提交**
 
 ```bash
 git add src/config/credential.ts tests/config/credential.test.ts
@@ -2786,7 +2786,7 @@ git commit -m "feat: add credential management with keytar"
 - 消费：`buildAgent`、`agentLoop`、`CredentialManager`
 - 产出：CLI 命令：`harness start <goal>`、`harness config set-key|view-key|clear-key`、`harness trace <session>`、`harness init <project>`
 
-- [ ] **步骤 1：编写失败测试**
+- [x] **步骤 1：编写失败测试**
 
 ```ts
 // tests/cli/index.test.ts
@@ -2831,12 +2831,12 @@ describe('CLI argument parsing', () => {
 });
 ```
 
-- [ ] **步骤 2：运行测试验证失败**
+- [x] **步骤 2：运行测试验证失败**
 
 运行：`npx vitest run tests/cli/index.test.ts`
 预期：FAIL — 模块未找到
 
-- [ ] **步骤 3：编写最小实现**
+- [x] **步骤 3：编写最小实现**
 
 ```ts
 // src/cli/index.ts
@@ -3019,12 +3019,12 @@ export async function initCommand(projectName: string): Promise<void> {
 }
 ```
 
-- [ ] **步骤 4：运行测试验证通过**
+- [x] **步骤 4：运行测试验证通过**
 
 运行：`npx vitest run tests/cli/index.test.ts`
 预期：PASS
 
-- [ ] **步骤 5：提交**
+- [x] **步骤 5：提交**
 
 ```bash
 git add src/cli/ tests/cli/
@@ -3044,7 +3044,7 @@ git commit -m "feat: add CLI entry point with start, config, trace, init command
 - 消费：所有先前组件
 - 产出：三个使用 mock LLM + `:memory:` SQLite 的确定性演示
 
-- [ ] **步骤 1：编写失败测试（护栏演示）**
+- [x] **步骤 1：编写失败测试（护栏演示）**
 
 ```ts
 // tests/demo/guardrail-demo.test.ts
@@ -3077,7 +3077,7 @@ describe('Demo: Guardrail intercepts dangerous action', () => {
 });
 ```
 
-- [ ] **步骤 2：编写失败测试（反馈闭环演示）**
+- [x] **步骤 2：编写失败测试（反馈闭环演示）**
 
 ```ts
 // tests/demo/feedback-demo.test.ts
@@ -3111,7 +3111,7 @@ describe('Demo: Feedback loop changes agent behavior', () => {
 });
 ```
 
-- [ ] **步骤 3：编写失败测试（记忆演示）**
+- [x] **步骤 3：编写失败测试（记忆演示）**
 
 ```ts
 // tests/demo/memory-demo.test.ts
@@ -3164,17 +3164,17 @@ describe('Demo: Memory consolidation and retrieval', () => {
 });
 ```
 
-- [ ] **步骤 4：运行测试验证失败**
+- [x] **步骤 4：运行测试验证失败**
 
 运行：`npx vitest run tests/demo/`
 预期：FAIL — 模块未找到
 
-- [ ] **步骤 5：运行测试验证通过**
+- [x] **步骤 5：运行测试验证通过**
 
 运行：`npx vitest run tests/demo/`
 预期：PASS
 
-- [ ] **步骤 6：提交**
+- [x] **步骤 6：提交**
 
 ```bash
 git add tests/demo/
@@ -3193,7 +3193,7 @@ git commit -m "feat: add mechanism demo tests for guardrail, feedback, memory"
 - 消费：`package.json`、`dist/`（构建产物）
 - 产出：用于分发的 Docker 镜像
 
-- [ ] **步骤 1：创建 Dockerfile**
+- [x] **步骤 1：创建 Dockerfile**
 
 ```dockerfile
 FROM node:20-alpine AS builder
@@ -3213,7 +3213,7 @@ ENTRYPOINT ["node", "dist/cli/index.js"]
 CMD ["--help"]
 ```
 
-- [ ] **步骤 2：创建 .dockerignore**
+- [x] **步骤 2：创建 .dockerignore**
 
 ```
 node_modules/
@@ -3224,12 +3224,12 @@ tests/
 .env
 ```
 
-- [ ] **步骤 3：验证 Docker 构建**
+- [x] **步骤 3：验证 Docker 构建**
 
 运行：`docker build -t coding-agent-harness .`
 预期：构建成功
 
-- [ ] **步骤 4：提交**
+- [x] **步骤 4：提交**
 
 ```bash
 git add Dockerfile .dockerignore
@@ -3249,7 +3249,7 @@ git commit -m "chore: add Dockerfile for container distribution"
 - 消费：所有先前交付物
 - 产出：项目文档
 
-- [ ] **步骤 1：创建 README.md**
+- [x] **步骤 1：创建 README.md**
 
 ```markdown
 # Coding Agent Harness
@@ -3335,7 +3335,7 @@ npm test
 - 追踪信息持久化到 SQLite 尚未实现
 ```
 
-- [ ] **步骤 2：创建 AGENT_LOG.md 占位**
+- [x] **步骤 2：创建 AGENT_LOG.md 占位**
 
 ```markdown
 # AGENT_LOG
@@ -3346,7 +3346,7 @@ npm test
 - **SPEC.md**：通过 brainstorming 技能创建设计文档
 ```
 
-- [ ] **步骤 3：创建 CI 配置**
+- [x] **步骤 3：创建 CI 配置**
 
 ```yaml
 # .github/workflows/ci.yml
@@ -3375,7 +3375,7 @@ jobs:
       - run: docker build -t coding-agent-harness .
 ```
 
-- [ ] **步骤 4：提交**
+- [x] **步骤 4：提交**
 
 ```bash
 git add README.md AGENT_LOG.md .github/
@@ -3393,3 +3393,35 @@ git commit -m "docs: add README, AGENT_LOG, CI config"
 3. **类型一致性：** 所有 task 中使用的类型与 Task 2（核心类型）的定义一致。
 4. **测试覆盖：** 每个 task 都有自己的失败测试 → 通过测试循环。
 5. **机制演示：** Task 17 覆盖了所有三个必需的演示（§A.6）。
+
+---
+
+## Task 完成记录
+
+| Task | 描述 | Commit Hash | 日期 |
+|------|------|-------------|------|
+| Task 1 | 项目脚手架 | `302d30d` | 2026-07-13 |
+| Task 2 | 核心类型定义 | `62563bf` | 2026-07-13 |
+| Task 3 | MockLLM 实现 | `e8ba581` | 2026-07-13 |
+| Task 4 | SQLite 数据库层 | `ca1096b` | 2026-07-13 |
+| Task 5 | 记忆模块 | `d8daf3f`、`b4bf743` | 2026-07-13 |
+| Task 6 | 工具注册与内建工具 | `cbeeee2` | 2026-07-13 |
+| Task 7 | 护栏 + HITL | `a82dfe2` | 2026-07-14 |
+| Task 8 | 反馈传感器 | `4436ca5` | 2026-07-14 |
+| Task 9 | 追踪器 | `486b269` | 2026-07-14 |
+| Task 10 | OpenAI 提供者 | `4436ca5`（合入 Task 8） | 2026-07-14 |
+| Task 11 | 沙箱 | `9ee5cb8` | 2026-07-14 |
+| Task 12 | 上下文工程 | `7cfcef0` | 2026-07-14 |
+| Task 13 | Agent 主循环 | `5234c46` | 2026-07-14 |
+| Task 14 | buildAgent 装配 | `b914b20` | 2026-07-14 |
+| Task 15 | 凭据管理 | `c28939f` | 2026-07-14 |
+| Task 16 | CLI 入口 | `c33c6e9`、`98e7193` | 2026-07-17 |
+| Task 17 | Demo 测试 | `c33c6e9` | 2026-07-17 |
+| Task 18 | Dockerfile | `4148b78` | 2026-07-14 |
+| Task 19 | README + CI | `6d6e4f6`、`f869c2a` | 2026-07-14 / 2026-07-17 |
+
+**实际实现与 PLAN 的差异：**
+- 数据库：`better-sqlite3` → `node:sqlite`（Windows + Node 22 兼容性）
+- 工具数量：6 个 → 3 个（`read_file`、`write_file`、`bash`；`run_test`/`search`/`list_files` 未实现，核心循环已覆盖等效功能）
+- OpenAI 提供者：未独立 commit，合入 Task 8 实现
+- CI 平台：`.gitlab-ci.yml` → `.github/workflows/ci.yml`

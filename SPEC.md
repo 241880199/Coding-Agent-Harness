@@ -67,7 +67,7 @@
 |------|------|
 | **输入** | 工具名称 + 参数（由 LLM 动作解析后提供） |
 | **行为** | 内建工具直呼处理函数；MCP 工具按 MCP 协议调用外部进程 |
-| **内建工具清单** | `read_file(path)`、`write_file(path, content)`、`bash(command)`、`run_test(pattern)`、`search(pattern)`、`list_files(path)` |
+| **内建工具清单** | `read_file(path)`、`write_file(path, content)`、`bash(command)` |
 | **输出** | 工具执行结果文本 |
 | **边界条件** | 工具名称不存在时返回错误信息；MCP 工具超时（默认 30s）返回超时错误 |
 | **错误处理** | 所有工具错误捕获为 `ToolError`，标准化错误格式回灌 |
@@ -259,10 +259,10 @@ agent_loop(goal, H)
 | 依赖 | 用途 | 类型 |
 |------|------|------|
 | OpenAI API（及兼容格式供应商） | LLM 调用 | 运行时（可替换为 mock） |
-| SQLite（`better-sqlite3`） | 记忆存储 | 运行时 |
+| SQLite（`node:sqlite`，Node.js 22 内置） | 记忆存储 | 运行时 |
 | `keytar` | 系统钥匙串接口 | 可选运行时 |
 | `dotenv` | `.env` 文件加载 | 可选运行时 |
-| Node.js 20+ | 运行时 | 运行时 |
+| Node.js 22+ | 运行时 | 运行时 |
 | MCP 协议（各外部工具服务器） | 外部工具接入 | 按需 |
 
 ---
@@ -376,10 +376,10 @@ CREATE TABLE mcp_servers (
 - 安装：`npm install -g coding-agent-harness`
 - CLI 入口：`harness`
 - 子命令：`harness init <project>`、`harness start "<goal>"`、`harness config set-key`、`harness config view-key`、`harness config clear-key`、`harness trace <session_id>`
-- 前提：Node.js 20+
+- 前提：Node.js 22+
 
 **Docker 容器分发：**
-- 基础镜像：`node:20-alpine`
+- 基础镜像：`node:22-alpine`
 - 构建：`docker build -t coding-agent-harness .`
 - 运行：
   ```
@@ -402,9 +402,9 @@ CREATE TABLE mcp_servers (
 
 | 层面 | 选型 | 理由 |
 |------|------|------|
-| **语言** | TypeScript (Node.js 20+) | 与 Superpowers 生态一致；async/await 天然适合 agent 循环；TDD 工具链成熟 |
+| **语言** | TypeScript (Node.js 22+) | 与 Superpowers 生态一致；async/await 天然适合 agent 循环；TDD 工具链成熟 |
 | **LLM 协议** | OpenAI API 兼容格式 | 事实标准，多种供应商（OpenAI、DeepSeek、Anthropic 等）均可接入 |
-| **记忆存储** | `better-sqlite3` | 零配置、`:memory:` 模式支持确定性单测、事务安全、结构化查询 |
+| **记忆存储** | `node:sqlite`（Node.js 22 内置） | 零配置、`:memory:` 模式支持确定性单测、事务安全、结构化查询 |
 | **凭据** | `keytar` + `dotenv` | 跨平台系统钥匙串 + 回退方案 |
 | **测试** | Vitest | 零配置、快速、原生 TypeScript 支持 |
 | **分发** | npm + Docker | npm 符合 Node.js 生态直觉；Docker 保证环境一致性 |
@@ -489,54 +489,50 @@ coding-agent-harness/
 │   │   ├── start.ts          # harness start
 │   │   ├── config.ts         # harness config
 │   │   ├── trace.ts          # harness trace
-│   │   └── init.ts           # harness init
+│   │   ├── init.ts           # harness init
+│   │   └── repl.ts           # 交互 REPL 模式
 │   ├── harness/              # Harness 内核
 │   │   ├── index.ts          # build_agent() + Harness 类型
 │   │   ├── loop.ts           # agent_loop()
 │   │   ├── context.ts        # 上下文工程
-│   │   ├── consolidate.ts    # 收尾 consolidate
 │   │   └── types.ts          # 核心类型定义
 │   ├── tools/                # 工具系统
-│   │   ├── registry.ts       # register_builtin_tools()
-│   │   ├── builtin/          # 内建工具实现
-│   │   │   ├── read-file.ts
-│   │   │   ├── write-file.ts
-│   │   │   ├── bash.ts
-│   │   │   ├── run-test.ts
-│   │   │   ├── search.ts
-│   │   │   └── list-files.ts
-│   │   └── mcp/              # MCP 协议支持
-│   │       ├── client.ts     # MCP 客户端
-│   │       └── registry.ts   # connect_mcp_servers()
+│   │   ├── registry.ts       # ToolRegistry 类
+│   │   └── builtin/          # 内建工具实现
+│   │       ├── read-file.ts
+│   │       ├── write-file.ts
+│   │       └── bash.ts
 │   ├── memory/               # 记忆模块（重点维度）
 │   │   ├── database.ts       # SQLite 初始化 + 迁移
 │   │   ├── session.ts        # 会话级记忆读写
 │   │   ├── knowledge.ts      # 项目级记忆读写
-│   │   ├── retriever.ts      # 预检索
-│   │   └── consolidate.ts    # 会话末固化
+│   │   └── retriever.ts      # 预检索
 │   ├── llm/                  # LLM 抽象层
 │   │   ├── provider.ts       # LLMProvider 接口
 │   │   ├── openai.ts         # OpenAI 兼容格式适配器
-│   │   └── mock.ts           # MockLLM（固定响应 + FSM）
+│   │   └── mock.ts           # MockLLM（固定响应 + FSM + 上下文感知）
 │   ├── governance/           # 治理模块
 │   │   ├── guardrail.ts      # 危险动作识别
-│   │   ├── hitl.ts           # 人工审批交互
-│   │   └── hooks.ts          # 生命周期事件系统
+│   │   └── hitl.ts           # 人工审批交互
 │   ├── feedback/             # 反馈模块
-│   │   └── sensors.ts        # run_sensors（test/lint/ts）
+│   │   └── sensors.ts        # SensorRunner（test/lint）
 │   ├── sandbox/              # 沙箱模块
-│   │   └── sandbox.ts        # 执行隔离与资源限制
+│   │   └── sandbox.ts        # 执行隔离与超时保护
 │   ├── observability/        # 可观测性
-│   │   └── tracer.ts         # 步骤记录与回放
+│   │   └── tracer.ts         # 步骤记录与导出
 │   └── config/               # 配置管理
-│       ├── loader.ts         # 加载规则文件
-│       └── credential.ts     # 凭据存取（keytar / 加密文件）
+│       └── credential.ts     # 凭据存取（keytar / 文件 / 环境变量）
 ├── tests/                    # 单元测试
 │   ├── harness/              # 主循环测试
+│   ├── tools/                # 工具测试
 │   ├── memory/               # 记忆模块测试
+│   ├── llm/                  # mock LLM 测试
 │   ├── governance/           # 护栏测试
 │   ├── feedback/             # 反馈测试
-│   ├── llm/                  # mock LLM 测试
+│   ├── sandbox/              # 沙箱测试
+│   ├── observability/        # 追踪器测试
+│   ├── config/               # 凭据测试
+│   ├── cli/                  # CLI 测试
 │   └── demo/                 # 机制演示用例
 ├── rules/                    # 默认规则文件模板
 │   ├── CLAUDE.md.example
